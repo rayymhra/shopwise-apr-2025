@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Admin Dashboard - ShopWise</title>
+        <!-- Bootstrap 5 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">ShopWise Admin</a>
+                <div class="ms-auto">
+                    <button id="logout" class="btn btn-outline-light">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container my-5">
+            <h2 class="text-center mb-4">Manage Products</h2>
+
+            <!-- Create Product Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Add New Product</h5>
+                    <form id="create-product-form" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="text" id="name" class="form-control" placeholder="Product Name" required />
+                        </div>
+                        <div class="mb-3">
+                            <textarea id="description" class="form-control" placeholder="Description"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <input type="number" id="price" class="form-control" placeholder="Price" required />
+                        </div>
+                        <div class="mb-3">
+                            <input type="number" id="stock" class="form-control" placeholder="Stock" required />
+                        </div>
+                        <div class="mb-3">
+                            <select id="category_id" class="form-select" required>
+                                <!-- Categories will be loaded here -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <input type="file" id="image" class="form-control" accept="image/*" />
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Add Product</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- List Products -->
+            <h5 class="mb-3">Product List</h5>
+            <table class="table table-bordered" id="product-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Category</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Product rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <!-- Bootstrap Bundle JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script>
+            $(document).ready(function () {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    alert("Please login first.");
+                    window.location.href = "login.html";
+                    return;
+                }
+
+                // Load Categories into Select
+                $.ajax({
+                    url: "http://localhost:8000/api/categories",
+                    type: "GET",
+                    headers: {
+                        Authorization: "Bearer " + token,
+                    },
+                    success: function (categories) {
+                        categories.forEach(function (category) {
+                            $("#category_id").append(`<option value="${category.id}">${category.name}</option>`);
+                        });
+                    },
+                });
+
+                // Load Products into Table
+                function loadProducts() {
+                    $.ajax({
+                        url: "http://localhost:8000/api/products",
+                        type: "GET",
+                        headers: {
+                            Authorization: "Bearer " + token,
+                        },
+                        success: function (products) {
+                            $("#product-table tbody").empty();
+                            products.forEach(function (product) {
+                                $('#product-table tbody').append(`
+                                <tr>
+                                    <td>
+                                    <img src="http://localhost:8000/storage/${product.image}" width="50" height="50" class="rounded me-2">
+                                    ${product.name}
+                                    </td>
+                                    <td>Rp ${product.price}</td>
+                                    <td>${product.stock}</td>
+                                    <td>${product.category?.name ?? '-'}</td>
+                                    <td>
+                                    <button class="btn btn-danger btn-sm delete-product" data-id="${product.id}">Delete</button>
+                                    </td>
+                                </tr>
+                                `);
+                            });
+                        },
+                    });
+                }
+
+                loadProducts();
+
+                // Create Product
+                $("#create-product-form").submit(function (e) {
+                    e.preventDefault();
+
+                    var formData = new FormData();
+                    formData.append("name", $("#name").val());
+                    formData.append("description", $("#description").val());
+                    formData.append("price", $("#price").val());
+                    formData.append("stock", $("#stock").val());
+                    formData.append("category_id", $("#category_id").val());
+
+                    const imageFile = $("#image")[0].files[0];
+                    if (imageFile) {
+                        formData.append("image", imageFile);
+                    }
+
+                    $.ajax({
+                        url: "http://localhost:8000/api/products",
+                        type: "POST",
+                        headers: {
+                            Authorization: "Bearer " + token,
+                        },
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function () {
+                            alert("Product created successfully.");
+                            loadProducts();
+                            $("#create-product-form")[0].reset();
+                        },
+                        error: function () {
+                            alert("Failed to create product.");
+                        },
+                    });
+                });
+
+                // Delete Product
+                $(document).on("click", ".delete-product", function () {
+                    const id = $(this).data("id");
+                    if (confirm("Are you sure want to delete this product?")) {
+                        $.ajax({
+                            url: `http://localhost:8000/api/products/${id}`,
+                            type: "DELETE",
+                            headers: {
+                                Authorization: "Bearer " + token,
+                            },
+                            success: function () {
+                                alert("Product deleted successfully.");
+                                loadProducts();
+                            },
+                        });
+                    }
+                });
+
+                // Logout
+                $("#logout").click(function () {
+                    localStorage.removeItem("token");
+                    window.location.href = "login.html";
+                });
+            });
+        </script>
+    </body>
+</html>

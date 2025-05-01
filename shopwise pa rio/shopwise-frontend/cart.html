@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ShopWise E-Commerce</title>
+        <!-- Bootstrap 5 -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <!-- jQuery -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h2>Your Cart</h2>
+            <ul id="cart-list" class="list-group mb-3"></ul>
+            <a href="checkout.html" class="btn btn-success">Proceed to Checkout</a>
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                $.ajax({
+                    url: "http://localhost:8000/api/cart",
+                    type: "GET",
+                    headers: {
+                        Authorization: "Bearer " + localStorage.getItem("token"),
+                    },
+                    success: function (response) {
+                        response.forEach(function (item) {
+                            $("#cart-list").append(`
+                    <li class="list-group-item d-flex justify-content-between">
+                      ${item.product.name} (x${item.quantity})
+                      <button class="btn btn-danger btn-sm remove-cart" data-id="${item.id}">Remove</button>
+                    </li>
+                  `);
+                        });
+                    },
+                });
+
+                $(document).on("click", ".remove-cart", function () {
+                    let id = $(this).data("id");
+                    $.ajax({
+                        url: `http://localhost:8000/api/cart/${id}`,
+                        type: "DELETE",
+                        headers: {
+                            Authorization: "Bearer " + localStorage.getItem("token"),
+                        },
+                        success: function () {
+                            location.reload();
+                        },
+                    });
+                });
+            });
+        </script>
+
+        <!-- Bootstrap 5 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

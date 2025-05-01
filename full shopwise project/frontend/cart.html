@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ShopWise - Cart</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container">
+        <a class="navbar-brand" href="#">ShopWise</a>
+        <div>
+          <a class="nav-link d-inline" href="index.html">Home</a>
+          <a class="nav-link d-inline" href="cart.html">Cart</a>
+          <a class="btn btn-outline-primary" href="login.html">Login</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Cart Content -->
+    <div class="container mt-5">
+      <h2>Cart</h2>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Remove</th>
+          </tr>
+        </thead>
+        <tbody id="cartList">
+          <!-- Cart items will be inserted here -->
+        </tbody>
+      </table>
+
+      <div class="text-end">
+        <h4>Subtotal: $<span id="subtotal">0</span></h4>
+        <a href="checkout.html" class="btn btn-primary">Proceed to Checkout</a>
+      </div>
+    </div>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+      $(document).ready(function () {
+  // Check for token on page load
+  if (!localStorage.getItem("token")) {
+    alert("Harap login terlebih dahulu.");
+    window.location.href = "login.html";
+  } else {
+    // Fetch cart data if the user is logged in
+    $.ajax({
+      url: "http://localhost:8000/api/cart",
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+      success: function (res) {
+        let subtotal = 0;
+        const cartList = $("#cartList");
+        cartList.empty(); // Clear any existing rows
+
+        res.forEach(function (item) {
+          const total = item.product.price * item.quantity;
+          subtotal += total;
+
+          cartList.append(`
+            <tr>
+              <td>${item.product.name}</td>
+              <td>$${item.product.price}</td>
+              <td>${item.quantity}</td>
+              <td>$${total}</td>
+              <td><button class="btn btn-sm btn-danger btn-remove-item" data-item-id="${item.product.id}">Remove</button></td>
+            </tr>
+          `);
+        });
+
+        $("#subtotal").text(subtotal);
+
+        // Event listener for dynamically added remove buttons
+        $("#cartList").on("click", ".btn-remove-item", function () {
+          const itemId = $(this).data("item-id");
+          removeItemFromCart(itemId);
+        });
+      },
+      error: function (err) {
+        console.error("Error fetching cart:", err);
+        alert("Gagal mengambil data keranjang.");
+      },
+    });
+  }
+});
+
+function removeItemFromCart(itemId) {
+  $.ajax({
+    url: `http://localhost:8000/api/cart/${itemId}`, // Adjust your API endpoint as needed
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer " + localStorage.getItem("token"),
+    },
+    success: function (res) {
+      alert("Item removed from cart.");
+      // Reload the cart to reflect the changes
+      window.location.reload(); // A simple way to update the cart
+      // Alternatively, you could just remove the table row from the DOM
+      // and recalculate the subtotal without a full reload.
+    },
+    error: function (err) {
+      console.error("Error removing item from cart:", err);
+      alert("Gagal menghapus item dari keranjang.");
+    },
+  });
+}
+
+$("#btnCheckout").click(function () {
+  
+});
+    </script>
+  </body>
+</html>

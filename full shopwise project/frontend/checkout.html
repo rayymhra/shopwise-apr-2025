@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ShopWise - Checkout</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container mt-5">
+  <h2>Checkout</h2>
+  <form id="checkoutForm">
+    <div class="mb-3">
+      <label>Full Name:</label>
+      <input type="text" class="form-control" id="name" required>
+    </div>
+    <div class="mb-3">
+      <label>Address:</label>
+      <textarea class="form-control" id="address" required></textarea>
+    </div>
+    <div class="mb-3">
+      <label>Phone:</label>
+      <input type="text" class="form-control" id="phone" required>
+    </div>
+    <button type="submit" class="btn btn-success">Place Order</button>
+  </form>
+</div>
+
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+<script>
+  if (!localStorage.getItem("token")) {
+    alert("Harap login terlebih dahulu.");
+    window.location.href = "login.html";
+  }
+</script>
+</body>
+</html>
